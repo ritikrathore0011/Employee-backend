@@ -2,59 +2,8 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
-use App\Models\EmailOtp;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use Session;
-use File;
-use Exception;
-use App\Mail\VerifyEmail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
 class UserController extends Controller
 {
-    // public function index()
-    // {
-    //     $id = session('user_id');
-    //     $user = User::find($id);
-    //     return view('settings.index', compact('user'));
-    // }
-
-    // public function updateUsername(Request $request)
-    // {
-    //     $request->validate([
-    //         'username' => 'required|string|unique:users,username,' . Auth::id(),
-    //         'email' => 'required|string|email:rfc,dns|max:255|unique:users,email,' . Auth::id(),
-    //     ]);
-
-    //     $user = Auth::user();
-       
-    //     if($user->email === $request->email){
-    //         $user->username = $request->username;
-    //         $user->save();
-    //      return response()->json(['success' => 'Username updated successfully!']);
-    //     }else{
-    //         $user->username = $request->username;
-    //         $user->save();
-
-    //        // response()->json(['success' => 'Username updated successfully!']);
-
-    //         $otpResponse = $this->sendOtp($request);
-    //         $otpData = json_decode($otpResponse->getContent(), true); // Decode OTP response
-    
-    //         return response()->json([
-    //             'success' => 'Username updated successfully!',
-    //             'message' => $otpData['message'], // "OTP sent to your email."
-    //             'Otp' => $otpData['Otp']
-    //         ]);
-
-    //        // return $this->sendOtp($request);
-    //     }
-    // }
-
     // public function sendOtp(Request $request)
     // {
     //     $request->validate([

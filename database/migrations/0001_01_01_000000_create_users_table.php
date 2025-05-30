@@ -10,7 +10,7 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    
+ 
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id(); // Auto-increment primary key
@@ -35,10 +35,10 @@ return new class extends Migration
             $table->string('id_proof_path')->nullable(); 
             $table->string('contract_path')->nullable(); 
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->rememberToken(); // remember_token field
-            $table->integer('token_version')->default(1); // For logout from all devices
-            $table->timestamp('last_login_at')->nullable(); // Track last login
-            $table->timestamps(); // created_at & updated_at
+            $table->rememberToken(); 
+            $table->integer('token_version')->default(1); 
+            $table->timestamp('last_login_at')->nullable(); 
+            $table->timestamps(); 
             $table->softDeletes();
         });
         

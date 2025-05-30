@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\LoginLogout;
-use Carbon\Carbon;
 class AuthController extends Controller
 {
     public function login(Request $request)
@@ -19,15 +16,15 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $remember = $request->has('remember'); // Check if "Remember Me" is checked
+        // $remember = $request->has('remember'); // Check if "Remember Me" is checked
 
         //  Save Remember Me Cookie **Before Login Attempt**
-        if ($remember) {
-            Cookie::queue('remembered_username', $request->username, 10080); // Store for 7 days
-            Cookie::queue('remembered_password', $request->password, 10080); // Store for 7 days
-        } else {
-            Cookie::queue(Cookie::forget('remembered_username'));
-        }
+        // if ($remember) {
+        //     Cookie::queue('remembered_username', $request->username, 10080); // Store for 7 days
+        //     Cookie::queue('remembered_password', $request->password, 10080); // Store for 7 days
+        // } else {
+        //     Cookie::queue(Cookie::forget('remembered_username'));
+        // }
 
         // Check if user exists with given username
         $user = User::where('name', $request->username)
@@ -48,6 +45,14 @@ class AuthController extends Controller
             'password' => $request->password
         ];
 
+        if($user->status != "active"){
+              return response()->json([
+                'status' => false,
+                'message' => "Your account is temporarily inactive! contact admin",
+            ], 404);
+        }
+
+
         // Attempt login
         if (Auth::attempt($credentials)) {
             // Redirect based on role
@@ -60,6 +65,7 @@ class AuthController extends Controller
                 'user' => [
                     'name' => $user->name,
                     'access_token' => $token,
+                    'employee_id' => $user->employee_id,
                     'role' =>$user->role,
                     'initials' => strtoupper(substr($user->name, 0, 1)) .
                         (str_contains($user->name, ' ') ? strtoupper(substr(explode(' ', $user->name)[1], 0, 1)) : '')

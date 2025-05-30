@@ -41,14 +41,14 @@ class ProfileController extends Controller
                 'name' => 'required|string',
                 'date_of_birth' => 'required|date',
                 'email' => 'required|unique:users,email,' . $userId,
-                'phone_number' => 'required|string',
+                'phone_number' => 'required|string|unique:users,phone_number,'. $userId,
             ]);
         } else {
             $request->validate([
                 'name' => 'required|string',
                 'date_of_birth' => 'required|date',
                 'email' => 'required|unique:users',
-                'phone_number' => 'required|string',
+                'phone_number' => 'required|string|unique:users',
                 'password' => 'required|string|confirmed',
             ]);
         }

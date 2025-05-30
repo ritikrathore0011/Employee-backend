@@ -45,13 +45,12 @@ class HolidayController extends Controller
             ], 201);
         }
     }
-    public function upcomingHolidays(Request $request)
+    public function upcomingHolidays()
     {
         $currentDate = Carbon::now();
 
-        // Fetch holidays that are after the current date
         $holidays = Holiday::where('date', '>', $currentDate)
-            ->orderBy('date', 'asc') // Order by date (ascending)
+            ->orderBy('date', 'asc') 
             ->get();
 
         return response()->json([

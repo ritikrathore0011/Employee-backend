@@ -83,30 +83,41 @@ class User extends Authenticatable
     //         $user->employee_id = 'NEXT' . ($lastNumber + 1);
 //     });
 // }
-protected static function boot()
-{
-    parent::boot();
+    protected static function boot()
+    {
+        parent::boot();
 
-    static::creating(function ($user) {
-        // Explicitly include soft-deleted records
-        $max = self::withTrashed()
-            ->where('employee_id', 'like', 'NEXT%')
-            ->selectRaw("MAX(CAST(SUBSTRING(employee_id, 5) AS UNSIGNED)) as max_id")
-            ->value('max_id');
+        static::creating(function ($user) {
+            // Explicitly include soft-deleted records
+            $max = self::withTrashed()
+                ->where('employee_id', 'like', 'NEXT%')
+                ->selectRaw("MAX(CAST(SUBSTRING(employee_id, 5) AS UNSIGNED)) as max_id")
+                ->value('max_id');
 
-        $nextNumber = $max ? (int) $max + 1 : 101;
+            $nextNumber = $max ? (int) $max + 1 : 101;
 
-        $user->employee_id = 'NEXT' . $nextNumber;
-    });
-}
+            $user->employee_id = 'NEXT' . $nextNumber;
+        });
+    }
 
-
+    use SoftDeletes;
 
     public function leaves()
     {
         return $this->hasMany(Leave::class);
     }
+    public function assignTasks()
+    {
+    return $this->hasMany(AssignTask::class, 'assigned_to');
+    }
 
-
-
+    protected static function booted()
+    {
+        static::deleting(function ($user) {
+            if (!$user->isForceDeleting()) {
+                $user->leaves()->delete();
+                $user->assignTasks()->delete();
+            }
+        });
+    }
 }

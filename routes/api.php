@@ -9,6 +9,8 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\AssignTaskController;
+use App\Http\Controllers\DashboardController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
@@ -20,6 +22,7 @@ Route::get('/checkStatus', [TimeTrackerController::class, 'checkStatus'])->middl
 Route::get('/employees', [UserController::class, 'getUsers'])->middleware('auth:sanctum');
 Route::get('/employees-count', [UserController::class, 'getUsersCount'])->middleware('auth:sanctum');
 Route::post('/records', [TimeTrackerController::class, 'records'])->middleware('auth:sanctum');
+Route::post('/detailed-sheet', [TimeTrackerController::class, 'detailedSheet'])->middleware('auth:sanctum');
 Route::post('/auth/google-login', [GoogleAuthController::class, 'googleLogin']);
 Route::post('/profile', [ProfileController::class, 'getProfile'])->middleware('auth:sanctum');
 Route::post('/profile-save', [ProfileController::class, 'saveProfile'])->middleware('auth:sanctum');
@@ -32,9 +35,15 @@ Route::post('/add-holiday', [HolidayController::class, 'addHoliday'])->middlewar
 Route::get('/holidays', [HolidayController::class, 'upcomingHolidays']);
 Route::post('/summary', [TimeTrackerController::class, 'monthSummary'])->middleware('auth:sanctum');
 // Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
-
-
-
-
+Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+Route::get('/assign-detail', [AssignTaskController::class, 'index'])->middleware('auth:sanctum');
+Route::post('/assign-task', [AssignTaskController::class, 'addTask'])->middleware('auth:sanctum');
+Route::post('/delete-task', [AssignTaskController::class, 'deleteTask'])->middleware('auth:sanctum');
+Route::post('/update-status', [AssignTaskController::class, 'updateStatus'])->middleware('auth:sanctum');
+Route::get('/dashboard-summary', [DashboardController::class, 'summary'])->middleware('auth:sanctum');
+Route::get('/dashboard-summary-user', [DashboardController::class, 'summaryUser'])->middleware('auth:sanctum');
+// Route::get('/translations/{locale}', function ($locale) {
+//     App::setLocale($locale);
+//     return response()->json(trans('messages'));
+// });
 

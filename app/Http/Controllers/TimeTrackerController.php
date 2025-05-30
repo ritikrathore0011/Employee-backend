@@ -15,14 +15,6 @@ class TimeTrackerController extends Controller
             $user = auth()->user();
             $userId = $user->id;
 
-
-
-            // $log = LoginLogout::create([
-            //     'user_id' => $userId,
-            //     'login_time' => now(),
-            //     'date' => Carbon::now()->toDateString(),
-            // ]);
-
             $log = LoginLogout::updateOrCreate(
                 [
                     'user_id' => $userId,
@@ -32,7 +24,7 @@ class TimeTrackerController extends Controller
                     'login_time' => now(),
                 ]
             );
-            
+
             return response()->json([
                 'status' => true,
                 'log_id' => Crypt::encrypt($log->id),
@@ -131,8 +123,8 @@ class TimeTrackerController extends Controller
                 'status' => true,
                 'message' => 'You have already checked in today.',
                 'check_in_status' => 'checked-in',
-                'log_id' => Crypt::encrypt($existingRecord->id), // Send the existing log_id for any further operations like checkout
-                'record' => $recordWithoutId, // Send the full record except for the 'id'
+                'log_id' => Crypt::encrypt($existingRecord->id),
+                'record' => $recordWithoutId, 
             ]);
         }
 
@@ -166,8 +158,113 @@ class TimeTrackerController extends Controller
     //     return response()->json(['status' => true, 'message' => 'Leave marked successfully']);
     // }
 
+    // public function records(Request $request)
+    // {
+    //     $user = auth()->user();
+    //     $userId = $user->id;
+
+    //     $year = $request->filled('year') ? $request->year : now()->year;
+    //     $month = $request->filled('month') ? str_pad($request->month, 2, '0', STR_PAD_LEFT) : now()->format('m');
+
+    //     $firstDay = Carbon::create($year, $month, 1);
+    //     $lastDay = $firstDay->copy()->endOfMonth();
+
+    //     // Generate all dates in the month
+    //     $allDates = [];
+    //     $date = $firstDay->copy();
+    //     while ($date <= $lastDay) {
+    //         $allDates[] = $date->format('Y-m-d');
+    //         $date->addDay();
+    //     }
+
+    //     // Fetch attendance logs
+    //     $logs = LoginLogout::with('user:id,name')
+    //         ->where('user_id', $userId)
+    //         ->whereYear('date', $year)
+    //         ->whereMonth('date', $month)
+    //         ->orderBy('login_time', 'desc')
+    //         ->get();
+
+
+    //     if ($logs->isEmpty()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'No records found for selected month and year.',
+    //         ]);
+    //     }
+
+    //     // Map logs by date
+    //     $recordsByDate = $logs->mapWithKeys(function ($log) {
+    //         return [
+    //             $log->date => [
+    //                 'id' => $log->id,
+    //                 'login_time' => $log->login_time,
+    //                 'logout_time' => $log->logout_time,
+    //                 'note' => $log->note,
+    //                 'date' => $log->date,
+    //                 'eod' => $log->eod
+    //             ]
+    //         ];
+    //     });
+
+    //     // Get holidays
+    //     $holidays = DB::table('holidays')
+    //         ->whereYear('date', $year)
+    //         ->whereMonth('date', $month)
+    //         ->pluck('title', 'date');
+
+    //     // Fill in dates without logs
+    //     foreach ($allDates as $dateStr) {
+    //         if (!isset($recordsByDate[$dateStr])) {
+    //             $carbonDate = Carbon::parse($dateStr);
+    //             $dayOfWeek = $carbonDate->dayOfWeek; // 0 = Sunday
+    //             $weekOfMonth = intval(floor(($carbonDate->day - 1) / 7)) + 1;
+
+    //             $note = null;
+    //             if ($holidays->has($dateStr)) {
+    //                 $note = $holidays[$dateStr];
+    //             } elseif ($dayOfWeek === 0) {
+    //                 $note = 'Sunday';
+    //             } elseif ($dayOfWeek === 6 && ($weekOfMonth === 2 || $weekOfMonth === 4)) {
+    //                 $note = 'Saturday';
+    //             }
+
+    //             $recordsByDate[$dateStr] = [
+    //                 'id' => null,
+    //                 'login_time' => null,
+    //                 'logout_time' => null,
+    //                 'note' => $note,
+    //                 'date' => $dateStr,
+    //             ];
+    //         }
+    //     }
+    //     // $request = null;
+    //     // $request = [
+    //     //     'id' => $userId,
+    //     //     'month' => $month,
+    //     //     'year' => $year,
+    //     // ];
+    //     $request->id = $userId;
+
+    //     $monthSummary = $this->monthSummary($request);
+
+    //     // Sort and return
+    //     $sortedRecords = collect($recordsByDate)->sortBy('date')->values();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'records' => $sortedRecords,
+    //         'summary' => $monthSummary
+    //     ]);
+    // }
+
+
+
+
+
     public function records(Request $request)
     {
+
         $user = auth()->user();
         $userId = $user->id;
 
@@ -184,6 +281,11 @@ class TimeTrackerController extends Controller
             $allDates[] = $date->format('Y-m-d');
             $date->addDay();
         }
+
+        // $today = now()->toDateString();
+        // $allDates = array_filter($allDates, function ($date) use ($today) {
+        //     return $date <= $today;
+        // });
 
         // Fetch attendance logs
         $logs = LoginLogout::with('user:id,name')
@@ -203,6 +305,7 @@ class TimeTrackerController extends Controller
 
         // Map logs by date
         $recordsByDate = $logs->mapWithKeys(function ($log) {
+            $day = Carbon::parse($log->date)->format('l');
             return [
                 $log->date => [
                     'id' => $log->id,
@@ -210,7 +313,8 @@ class TimeTrackerController extends Controller
                     'logout_time' => $log->logout_time,
                     'note' => $log->note,
                     'date' => $log->date,
-                    'eod' => $log->eod
+                    'eod' => $log->eod,
+                    'day' => $day,
                 ]
             ];
         });
@@ -243,7 +347,23 @@ class TimeTrackerController extends Controller
                     'logout_time' => null,
                     'note' => $note,
                     'date' => $dateStr,
+                    'day' => $carbonDate->format('l'),
                 ];
+            } else {
+                $record = $recordsByDate->get($dateStr);
+
+                if (
+                    (empty($record['login_time']) || is_null($record['login_time'])) &&
+                    str_contains(strtolower($record['note'] ?? ''), 'leave') &&
+                    $holidays->has($dateStr)
+                ) {
+                    $record['note'] = $holidays[$dateStr];
+                }
+
+                $record['day'] = Carbon::parse($dateStr)->format('l');
+                $record['date'] = $dateStr;
+
+                $recordsByDate->put($dateStr, $record);
             }
         }
         // $request = null;
@@ -268,9 +388,6 @@ class TimeTrackerController extends Controller
 
     public function monthSummary(Request $request)
     {
-        // $userId = $request->id;   
-        // $month = $request->month;    
-        // $year = $request->year;
         $userId = $request->id;
         $month = $request->month ? $request->month : now()->month;
         $year = $request->year ? $request->year : now()->year;
@@ -282,9 +399,9 @@ class TimeTrackerController extends Controller
         $saturdayCount = 0;
 
         $logs = DB::table('login_logout')
-        ->where('user_id', $userId)
-        ->whereBetween('date', [$startDate, $endDate])
-        ->get();
+            ->where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
 
         if ($logs->isEmpty()) {
             return response()->json([
@@ -358,21 +475,58 @@ class TimeTrackerController extends Controller
 
         // Loop through logs once and calculate everything
         foreach ($logs as $log) {
-            if (is_null($log->login_time) && is_null($log->logout_time)) {
-                $leave++;
+            // if (is_null($log->login_time) && is_null($log->logout_time) && stripos($log->note, 'leave') !== false) {
+            //     $leave++;
+            // }
+            if (
+                is_null($log->login_time) &&
+                is_null($log->logout_time) &&
+                stripos($log->note, 'leave') !== false
+            ) {
+                $date = Carbon::parse($log->date);
+
+                // Check if it's a holiday
+                $isHoliday = DB::table('holidays')->whereDate('date', $log->date)->exists();
+
+                // Count 2nd and 4th Saturday logic
+                $isWeekoff = false;
+                if ($date->isSaturday()) {
+                    $weekOfMonth = intval(ceil($date->day / 7)); // e.g., 2nd Saturday
+                    if ($weekOfMonth === 2 || $weekOfMonth === 4) {
+                        $isWeekoff = true;
+                    }
+                }
+
+                // Final condition
+                if (!$isHoliday && !$date->isSunday() && !$isWeekoff) {
+                    $leave++;
+                }
             }
 
             if (!is_null($log->login_time)) {
                 $records++;
 
-                if (!is_null($log->login_time)) {
-                    if (Carbon::parse($log->login_time)->gt(Carbon::createFromTime(11, 0))) {
-                        $late_logins++;
-                    }
+                // if (!is_null($log->login_time)) {
+                //     if (Carbon::parse($log->login_time)->gt(Carbon::createFromTime(11, 0))) {
+                //         $late_logins++;
+                //     }
+                // }
+
+                // if (!is_null($log->logout_time)) {
+                //     if (Carbon::parse($log->logout_time)->lt(Carbon::createFromTime(17, 30))) {
+                //         $early_logouts++;
+                //     }
+                // }
+
+                // More accurate: Compare against same date at 11:00 AM
+                $login = Carbon::parse($log->login_time);
+                if ($login->gt($login->copy()->setTime(11, 0))) {
+                    $late_logins++;
                 }
 
                 if (!is_null($log->logout_time)) {
-                    if (Carbon::parse($log->logout_time)->lt(Carbon::createFromTime(17, 30))) {
+                    $logout = Carbon::parse($log->logout_time);
+                    if ($logout->lt($logout->copy()->setTime(17, 30))) {
                         $early_logouts++;
                     }
                 }
@@ -387,11 +541,121 @@ class TimeTrackerController extends Controller
             'status' => true,
             'total_days' => $totalWorkingDays,
             'Holiday' => $holiday,
-            'Total Working days' => $totalWorkingDays,
+            // 'Total Working days' => $totalWorkingDays,
             'present' => $records,
             'leaves' => $leave,
             'late_logins' => $late_logins,
             'early_logouts' => $early_logouts
+        ]);
+    }
+
+
+
+     public function detailedSheet(Request $request)
+    {
+
+        $user = auth()->user();
+        $userId = $request->id;
+
+        $year = $request->filled('year') ? $request->year : now()->year;
+        $month = $request->filled('month') ? str_pad($request->month, 2, '0', STR_PAD_LEFT) : now()->format('m');
+
+        $firstDay = Carbon::create($year, $month, 1);
+        $lastDay = $firstDay->copy()->endOfMonth();
+
+        // Generate all dates in the month
+        $allDates = [];
+        $date = $firstDay->copy();
+        while ($date <= $lastDay) {
+            $allDates[] = $date->format('Y-m-d');
+            $date->addDay();
+        }
+        // Fetch attendance logs
+        $logs = LoginLogout::with('user:id,name')
+            ->where('user_id', $userId)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->orderBy('login_time', 'desc')
+            ->get();
+
+
+        if ($logs->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No records found for selected month and year.',
+            ]);
+        }
+
+        // Map logs by date
+        $recordsByDate = $logs->mapWithKeys(function ($log) {
+            $day = Carbon::parse($log->date)->format('l');
+            return [
+                $log->date => [
+                    'id' => $log->id,
+                    'login_time' => $log->login_time,
+                    'logout_time' => $log->logout_time,
+                    'note' => $log->note,
+                    'date' => $log->date,
+                    'eod' => $log->eod,
+                    'day' => $day,
+                ]
+            ];
+        });
+
+        // Get holidays
+        $holidays = DB::table('holidays')
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->pluck('title', 'date');
+
+        // Fill in dates without logs
+        foreach ($allDates as $dateStr) {
+            if (!isset($recordsByDate[$dateStr])) {
+                $carbonDate = Carbon::parse($dateStr);
+                $dayOfWeek = $carbonDate->dayOfWeek; // 0 = Sunday
+                $weekOfMonth = intval(floor(($carbonDate->day - 1) / 7)) + 1;
+
+                $note = null;
+                if ($holidays->has($dateStr)) {
+                    $note = $holidays[$dateStr];
+                } elseif ($dayOfWeek === 0) {
+                    $note = 'Sunday';
+                } elseif ($dayOfWeek === 6 && ($weekOfMonth === 2 || $weekOfMonth === 4)) {
+                    $note = 'Saturday';
+                }
+
+                $recordsByDate[$dateStr] = [
+                    'id' => null,
+                    'login_time' => null,
+                    'logout_time' => null,
+                    'note' => $note,
+                    'date' => $dateStr,
+                    'day' => $carbonDate->format('l'),
+                ];
+            } else {
+                $record = $recordsByDate->get($dateStr);
+
+                if (
+                    (empty($record['login_time']) || is_null($record['login_time'])) &&
+                    str_contains(strtolower($record['note'] ?? ''), 'leave') &&
+                    $holidays->has($dateStr)
+                ) {
+                    $record['note'] = $holidays[$dateStr];
+                }
+
+                $record['day'] = Carbon::parse($dateStr)->format('l');
+                $record['date'] = $dateStr;
+
+                $recordsByDate->put($dateStr, $record);
+            }
+        }
+        // Sort and return
+        $sortedRecords = collect($recordsByDate)->sortBy('date')->values();
+
+        return response()->json([
+            'status' => true,
+            'records' => $sortedRecords,
+            'id' => $request->id
         ]);
     }
 }
